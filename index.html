@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>You Choose Adventure</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    font-size: 1.5em;
+    margin: 0;
+    padding: 0;
+    background: #f0f8ff;
+  }
+  .container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+  }
+  img {
+    max-width: 150px;
+    display: block;
+    margin: 10px auto;
+  }
+  .option {
+    display: inline-block;
+    margin: 15px;
+    cursor: pointer;
+    width: 180px;
+  }
+  .option-word {
+    font-size: 1.2em;
+    margin-top: 5px;
+  }
+  input[type="text"] {
+    width: 80%;
+    font-size: 1.5em;
+    padding: 10px;
+  }
+  button {
+    font-size: 1.5em;
+    padding: 10px 20px;
+    margin-top: 20px;
+  }
+  #toggle-sound {
+    font-size: 1em;
+    padding: 5px 10px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1 id="quiz-title">Welcome to the Adventure</h1>
+  <div id="quiz-content"></div>
+  <button id="toggle-sound">🔊 Sound On</button>
+</div>
+
+<script>
+// --- Adventure Questions ---
+const questions = [
+  { type: "text", question: "What is your name?" },
+  { type: "choice", question: "What type of character would you like to be?", 
+    answers: [
+      "Knight", "Wizard", "Princess", "Dragon", "Elf", 
+      "Giant", "Fairy", "Trickster", "Samurai", "Warrior"
+    ] 
+  }
+];
+
+let currentQuestion = 0;
+let playerName = "";
+let choices = {};
+let soundOn = true;
+
+// --- Speech ---
+function speak(text) {
+  if (!soundOn) return;
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-GB";
+  speechSynthesis.speak(utterance);
+}
+
+// --- Image fetch with hardcoded + fallbacks ---
+async function fetchImage(word) {
+  // 0. Hardcoded special cases
+  if (word.toLowerCase() === "samurai") {
+    return "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Samurai_with_sword.jpg/320px-Samurai_with_sword.jpg";
+  }
+  if (word.toLowerCase() === "trickster") {
+    return "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Trickster_coyote.png/320px-Trickster_coyote.png";
+  }
+
+  // 1. Try ARASAAC
+  try {
+    const res = await fetch(`https://api.arasaac.org/api/pictograms/en/search/${word}`);
+    const data = await res.json();
+    if (data.length > 0) {
+      return `https://static.arasaac.org/pictograms/${data[0]._id}/${data[0]._id}_500.png`;
+    }
+  } catch (e) {
+    console.log("ARASAAC error:", e);
+  }
+
+  // 2. Try Pixabay fallback
+  try {
+    const pixabayKey = "49978957-7f3f3c500656460c1f5b4026f";
+    const res = await fetch(`https://pixabay.com/api/?key=${pixabayKey}&q=${encodeURIComponent(word)}&image_type=illustration&per_page=3`);
+    const data = await res.json();
+    if (data.hits && data.hits.length > 0) {
+      return data.hits[0].webformatURL;
+    }
+  } catch (e) {
+    console.log("Pixabay error:", e);
+  }
+
+  // 3. Final fallback placeholder
+  return `https://via.placeholder.com/150?text=${encodeURIComponent(word)}`;
+}
+
+// --- Display current question ---
+async function showQuestion() {
+  const q = questions[currentQuestion];
+  document.getElementById("quiz-content").innerHTML = "";
+  document.getElementById("quiz-title").textContent = q.question;
+  speak(q.question);
+
+  if (q.type === "text") {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.id = "answer-input";
+    document.getElementById("quiz-content").appendChild(input);
+
+    const btn = document.createElement("button");
+    btn.textContent = "Next";
+    btn.onclick = () => {
+      const value = document.getElementById("answer-input").value.trim();
+      if (value) {
+        playerName = value;
+        choices["Name"] = value;
+        speak(`Hello ${playerName}, welcome to the adventure!`);
+        nextQuestion();
+      }
+    };
+    document.getElementById("quiz-content").appendChild(btn);
+
+  } else if (q.type === "choice") {
+    for (let ans of q.answers) {
+      const opt = document.createElement("div");
+      opt.className = "option";
+
+      const img = document.createElement("img");
+      img.src = "";
+      fetchImage(ans).then(url => img.src = url);
+
+      const word = document.createElement("div");
+      word.className = "option-word";
+      word.textContent = ans;
+
+      opt.appendChild(img);
+      opt.appendChild(word);
+      opt.onclick = () => {
+        choices[q.question] = ans;
+        speak(`${playerName}, you have chosen to be a ${ans}.`);
+        showSummary();
+      };
+
+      document.getElementById("quiz-content").appendChild(opt);
+    }
+  }
+}
+
+// --- Move to next question ---
+function nextQuestion() {
+  currentQuestion++;
+  if (currentQuestion < questions.length) {
+    showQuestion();
+  }
+}
+
+// --- Summary before story branching ---
+async function showSummary() {
+  document.getElementById("quiz-title").textContent = `Well done, ${playerName}!`;
+  const summaryDiv = document.createElement("div");
+
+  for (let key in choices) {
+    const ans = choices[key];
+    const item = document.createElement("div");
+    item.innerHTML = `<strong>${key}:</strong> ${ans}<br>`;
+    const img = document.createElement("img");
+    img.src = await fetchImage(ans);
+    item.appendChild(img);
+    summaryDiv.appendChild(item);
+  }
+
+  document.getElementById("quiz-content").innerHTML = "";
+  document.getElementById("quiz-content").appendChild(summaryDiv);
+
+  speak(`Excellent ${playerName}, you are now ready to begin your adventure as a ${choices["What type of character would you like to be?"]}.`);
+}
+
+// --- Sound toggle ---
+document.getElementById("toggle-sound").onclick = () => {
+  soundOn = !soundOn;
+  document.getElementById("toggle-sound").textContent = soundOn ? "🔊 Sound On" : "🔇 Sound Off";
+};
+
+// --- Start ---
+showQuestion();
+</script>
+</body>
+</html>

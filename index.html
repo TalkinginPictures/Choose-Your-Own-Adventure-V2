@@ -64,7 +64,7 @@ const questions = [
   { type: "choice", question: "What type of character would you like to be?", 
     answers: [
       "Knight", "Wizard", "Princess", "Dragon", "Elf", 
-      "Giant", "Fairy", "Trickster", "Samuri", "Warrior"
+      "Giant", "Fairy", "Trickster", "Samurai", "Warrior"
     ] 
   }
 ];
@@ -86,7 +86,6 @@ function speak(text) {
 function fetchARASAAC(word) {
   const emojiFallbacks = {
     "Trickster": "🤡", 
-    "Samuri": "🥷",   // typo version
     "Samurai": "🥷", 
     "Ninja": "🥷"
   };
@@ -107,7 +106,7 @@ function fetchARASAAC(word) {
 }
 
 // Display current question
-async function showQuestion() {
+function showQuestion() {
   const q = questions[currentQuestion];
   document.getElementById("quiz-content").innerHTML = "";
   document.getElementById("quiz-title").textContent = q.question;
@@ -137,4 +136,63 @@ async function showQuestion() {
       const opt = document.createElement("div");
       opt.className = "option";
 
-      const img = document.createE
+      const img = document.createElement("img");
+      img.src = "";
+      fetchARASAAC(ans).then(url => img.src = url);
+
+      const word = document.createElement("div");
+      word.className = "option-word";
+      word.textContent = ans;
+
+      opt.appendChild(img);
+      opt.appendChild(word);
+      opt.onclick = () => {
+        choices[q.question] = ans;
+        speak(`${playerName}, you have chosen to be a ${ans}.`);
+        showSummary();
+      };
+
+      document.getElementById("quiz-content").appendChild(opt);
+    }
+  }
+}
+
+// Next question
+function nextQuestion() {
+  currentQuestion++;
+  if (currentQuestion < questions.length) {
+    showQuestion();
+  }
+}
+
+// Show summary before branching to adventure
+async function showSummary() {
+  document.getElementById("quiz-title").textContent = `Well done, ${playerName}!`;
+  const summaryDiv = document.createElement("div");
+
+  for (let key in choices) {
+    const ans = choices[key];
+    const item = document.createElement("div");
+    item.innerHTML = `<strong>${key}:</strong> ${ans}<br>`;
+    const img = document.createElement("img");
+    img.src = await fetchARASAAC(ans);
+    item.appendChild(img);
+    summaryDiv.appendChild(item);
+  }
+
+  document.getElementById("quiz-content").innerHTML = "";
+  document.getElementById("quiz-content").appendChild(summaryDiv);
+
+  speak(`Excellent ${playerName}, you are now ready to begin your adventure as a ${choices["What type of character would you like to be?"]}.`);
+}
+
+document.getElementById("toggle-sound").onclick = () => {
+  soundOn = !soundOn;
+  document.getElementById("toggle-sound").textContent = soundOn ? "🔊 Sound On" : "🔇 Sound Off";
+};
+
+// Start
+showQuestion();
+</script>
+</body>
+</html>

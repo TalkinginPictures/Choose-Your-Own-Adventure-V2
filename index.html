@@ -64,8 +64,15 @@ const questions = [
   { type: "choice", question: "What type of character would you like to be?", 
     answers: [
       "Knight", "Wizard", "Princess", "Dragon", "Elf", 
-      "Giant", "Fairy", "Joker", "Ninja", "Warrior"
+      "Giant", "Fairy", "Warrior"
     ] 
+  },
+  { type: "choice", question: "What is your special skill?", 
+    answers: [
+      "Running", "Teamwork", "Reading", "Writing", "Cooking", "Singing",
+      "Flying", "Casting spells", "Invisibility", "Sword fighting",
+      "Talking to animals", "Healing"
+    ]
   }
 ];
 
@@ -139,8 +146,8 @@ function showQuestion() {
       opt.appendChild(word);
       opt.onclick = () => {
         choices[q.question] = ans;
-        speak(`${playerName}, you have chosen to be a ${ans}.`);
-        showSummary();
+        speak(`${playerName}, you have chosen ${ans}.`);
+        nextQuestion();
       };
 
       document.getElementById("quiz-content").appendChild(opt);
@@ -153,6 +160,8 @@ function nextQuestion() {
   currentQuestion++;
   if (currentQuestion < questions.length) {
     showQuestion();
+  } else {
+    showSummary();
   }
 }
 
@@ -174,7 +183,7 @@ async function showSummary() {
   document.getElementById("quiz-content").innerHTML = "";
   document.getElementById("quiz-content").appendChild(summaryDiv);
 
-  speak(`Excellent ${playerName}, you are now ready to begin your adventure as a ${choices["What type of character would you like to be?"]}.`);
+  speak(`Excellent ${playerName}, you are now ready to begin your adventure as a ${choices["What type of character would you like to be?"]}, with the special skill of ${choices["What is your special skill?"]}.`);
 }
 
 document.getElementById("toggle-sound").onclick = () => {

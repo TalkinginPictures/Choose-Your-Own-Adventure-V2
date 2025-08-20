@@ -64,7 +64,7 @@ const questions = [
   { type: "choice", question: "What type of character would you like to be?", 
     answers: [
       "Knight", "Wizard", "Princess", "Dragon", "Elf", 
-      "Giant", "Fairy", "Trickster", "Samurai", "Warrior"
+      "Giant", "Fairy", "Joker", "Ninja", "Warrior"
     ] 
   }
 ];
@@ -82,22 +82,13 @@ function speak(text) {
   speechSynthesis.speak(utterance);
 }
 
-// Fetch ARASAAC image or emoji fallback
+// Fetch ARASAAC image or fallback
 function fetchARASAAC(word) {
-  const emojiFallbacks = {
-    "Trickster": "🤡", 
-    "Samurai": "🥷", 
-    "Ninja": "🥷"
-  };
-
   return fetch(`https://api.arasaac.org/api/pictograms/en/search/${word}`)
     .then(res => res.json())
     .then(data => {
       if (data.length > 0) {
         return `https://static.arasaac.org/pictograms/${data[0]._id}/${data[0]._id}_500.png`;
-      } else if (emojiFallbacks[word]) {
-        // Create placeholder with emoji text
-        return `https://via.placeholder.com/150/ffffff/000000?text=${encodeURIComponent(emojiFallbacks[word])}`;
       } else {
         return "https://via.placeholder.com/150?text=" + word;
       }
@@ -165,7 +156,7 @@ function nextQuestion() {
   }
 }
 
-// Show summary before branching to adventure
+// Show summary
 async function showSummary() {
   document.getElementById("quiz-title").textContent = `Well done, ${playerName}!`;
   const summaryDiv = document.createElement("div");
